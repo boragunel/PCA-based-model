@@ -93,35 +93,35 @@ def plot_cumulative_variance(eigenvalues):
     plt.axhline(y=90, color='k', linestyle='--', alpha=0.5)
     plt.show()
 
-###Building k-means algorithm by Bora
-
 def k_means_algorithm():
     """Performs k-means clustering on PCA projections."""
-    # Load and preprocess data
+    ##Loads initial data
     X_scaled, df, numerical_columns = load_and_preprocess_data('Butterfly_Data_adjusted.csv')
     X_pca, components, explained_variance_ratio, eigenvalues = pca_from_scratch(X_scaled)
     PC1_proj = X_pca[:,0]
     PC2_proj = X_pca[:,1]
     PC_proj_stacked = np.column_stack((PC1_proj, PC2_proj))
 
-    # Initialize clusters
+    # Initialise clusters
     n_clusters = 3
-    total_example_number = len(PC_proj_stacked)  # Dynamically determine total examples
-    
+    total_example_number = len(PC_proj_stacked)
     np.random.seed(42)
     rand_pick = np.random.choice(total_example_number, n_clusters, replace=False)
     centroids = PC_proj_stacked[rand_pick, :]
 
     # Iterative optimization of k-means
     for iteration in range(200):
+        #Iteration 1 (assign to clusters)
         distance = np.linalg.norm(PC_proj_stacked[:, None, :] - centroids[None, :, :], axis=2)
         cluster_pick = np.argmin(distance, axis=1)
-
-        new_centroids = np.array([
-            PC_proj_stacked[cluster_pick == k].mean(axis=0) if np.any(cluster_pick == k) else centroids[k]
-            for k in range(n_clusters)
-        ])
-
+        #Iteration 2 (re-assign centroids)
+        new_centroids = np.zeros_like(centroids)
+        for k in range(n_clusters):
+            if np.any(cluster_pick == k):
+                new_centroids[k] = PC_proj_stacked[cluster_pick == k].mean(axis=0)
+            else:
+                new_centroids[k] = centroids[k]
+        #Confirm the iterations required for convergence:
         if np.allclose(centroids, new_centroids, atol=1e-4):
             print(f"{iteration+1} iterations required for convergence")
             break
@@ -164,16 +164,13 @@ def plot_k_means():
 def plot_elbow_method(PCA, maximal_range):
     distortion = []
 
+    ##Calculate distortion
     for k in range(1, maximal_range + 1):  # Ensuring k starts at 1
         kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
         kmeans.fit(PCA)
         distortion.append(kmeans.inertia_)
     
-    print(f'cluster number 2 distortion = {distortion[1]}')
-    print(f'cluster number 3 distortion = {distortion[2]}')
-    print(f'cluster number 4 distortion = {distortion[3]}')
-    print(f'difference between 2 and 3 = {distortion[1] - distortion[2]}')
-    print(f'difference between 3 and 4 = {distortion[2] - distortion[3]}')
+    ##plot distortion against clusters
     plt.figure(figsize=(8, 6))
     plt.plot(range(1, maximal_range + 1), distortion, 'bo-', label="Distortion")
     plt.scatter(range(1, maximal_range + 1), distortion, marker='o', color='b')
@@ -183,6 +180,13 @@ def plot_elbow_method(PCA, maximal_range):
     plt.grid(True)
     plt.legend()
     plt.show()
+    
+    # Need specific points from the distortion
+    print(f'cluster number 2 distortion = {distortion[1]}')
+    print(f'cluster number 3 distortion = {distortion[2]}')
+    print(f'cluster number 4 distortion = {distortion[3]}')
+    print(f'difference between 2 and 3 = {distortion[1] - distortion[2]}')
+    print(f'difference between 3 and 4 = {distortion[2] - distortion[3]}')
 
 ##Final
 
