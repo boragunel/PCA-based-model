@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 import seaborn as sns
+from sklearn.cluster import KMeans
 
 def load_and_preprocess_data(filepath):
     df = pd.read_csv(filepath)
@@ -147,8 +148,10 @@ def plot_k_means():
         mask = cluster_pick == k  # Boolean mask for selecting points
         plt.scatter(PC_proj_stacked[mask, 0], PC_proj_stacked[mask, 1], 
                     label=labels[k], color=colors[k], alpha=0.7)
-
-    # Plot centroids
+    
+    for i, txt in enumerate(df['Country']): 
+        plt.annotate(txt, (PC_proj_stacked[i, 0], PC_proj_stacked[i, 1]), fontsize = 6)
+    
     plt.scatter(centroids[:, 0], centroids[:, 1], color='black', marker='x', s=200, label='Centroids')
 
     plt.xlabel('PCA1')
@@ -156,6 +159,29 @@ def plot_k_means():
     plt.title('Graph for K-means clustering')
     plt.legend()
     plt.grid(True)
+    plt.show()
+
+def plot_elbow_method(PCA, maximal_range):
+    distortion = []
+
+    for k in range(1, maximal_range + 1):  # Ensuring k starts at 1
+        kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+        kmeans.fit(PCA)
+        distortion.append(kmeans.inertia_)
+    
+    print(f'cluster number 2 distortion = {distortion[1]}')
+    print(f'cluster number 3 distortion = {distortion[2]}')
+    print(f'cluster number 4 distortion = {distortion[3]}')
+    print(f'difference between 2 and 3 = {distortion[1] - distortion[2]}')
+    print(f'difference between 3 and 4 = {distortion[2] - distortion[3]}')
+    plt.figure(figsize=(8, 6))
+    plt.plot(range(1, maximal_range + 1), distortion, 'bo-', label="Distortion")
+    plt.scatter(range(1, maximal_range + 1), distortion, marker='o', color='b')
+    plt.xlabel('Number of Clusters (k)')
+    plt.ylabel('Distortion (Inertia)')
+    plt.title('Elbow Method for Optimal Clusters')
+    plt.grid(True)
+    plt.legend()
     plt.show()
 
 ##Final
@@ -168,17 +194,18 @@ def main():
     X_pca, components, explained_variance_ratio, eigenvalues = pca_from_scratch(X_scaled)
 
     # Create and display visualizations
-    plot_scatter(X_pca, df, explained_variance_ratio)
-    plot_scree(eigenvalues)
-    plot_loading_scores(components, numerical_columns)
-    plot_cumulative_variance(eigenvalues)
+    #plot_scatter(X_pca, df, explained_variance_ratio)
+    #plot_scree(eigenvalues)
+    #plot_loading_scores(components, numerical_columns)
+    #plot_cumulative_variance(eigenvalues)
     plot_k_means()
+    plot_elbow_method(X_pca, 10)
 
     # Print explained variance ratio
     print("\nExplained Variance Ratio:")
     print(f"PC1: {explained_variance_ratio[0]:.2%}")
     print(f"PC2: {explained_variance_ratio[1]:.2%}")
-    print(f"PC3: {explained_variance_ratio[2]:.2%}")
+    #print(f"PC3: {explained_variance_ratio[2]:.2%}")
 
 
 
